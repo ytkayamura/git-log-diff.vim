@@ -18,6 +18,11 @@ Once installed, you can use the plugin to display git log diffs by running the f
 :GitLogDiff
 ```
 
+## Feature: Display Diff Results
+
+- In the log buffer, select a commit and press `p` to display the result of `git diff --name-only` in a new buffer.
+- In the name-only buffer, select a file and press `p` to display the diff of that file in a diff buffer.
+
 ## Keybinding Example
 
 To bind the command to `<leader>gl`, add the following to your `.vimrc` or `init.vim`:
