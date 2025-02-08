@@ -1,6 +1,6 @@
 const s:BUF_NAME_PREFIX = 'GitLogDiff:'
 const s:LOG_BUF = s:BUF_NAME_PREFIX . 'Log'
-const s:DIFF_ONLY_NAME_BUF = s:BUF_NAME_PREFIX . 'DiffOnlyName:'
+const s:DIFF_NAME_STATUS_BUF = s:BUF_NAME_PREFIX . 'DiffOnlyName:'
 const s:DIFF_BY_FILE_BUF = s:BUF_NAME_PREFIX . 'DiffByFile:'
 
 function! s:ActivateBuffer(buffer_name)
@@ -76,13 +76,13 @@ function! s:git_log_buffer(target_dir = '.')
   1delete
   setlocal nomodifiable
   
-  nnoremap <buffer> <silent> p :call <SID>show_diff_files()<CR>
+  nnoremap <buffer> <silent> p :call <SID>diff_name_status()<CR>
   nnoremap <buffer> <silent> q :call <SID>close_all_buffer()<CR>
-  nnoremap <buffer> <silent> <C-n> j:call <SID>show_diff_files()<CR>
-  nnoremap <buffer> <silent> <C-p> k:call <SID>show_diff_files()<CR>
+  nnoremap <buffer> <silent> <C-n> j:call <SID>diff_name_status()<CR>
+  nnoremap <buffer> <silent> <C-p> k:call <SID>diff_name_status()<CR>
   execute 'nnoremap <buffer> <silent> <C-j> :call <SID>ActivateBuffer("' . s:LOG_BUF . '")<CR>'
-  execute 'nnoremap <buffer> <silent> <C-h> :call <SID>ActivateBuffer("' . s:DIFF_ONLY_NAME_BUF . '")<CR>'
-  execute 'nnoremap <buffer> <silent> <C-k> :call <SID>ActivateBuffer("' . s:DIFF_ONLY_NAME_BUF . '")<CR>'
+  execute 'nnoremap <buffer> <silent> <C-h> :call <SID>ActivateBuffer("' . s:DIFF_NAME_STATUS_BUF . '")<CR>'
+  execute 'nnoremap <buffer> <silent> <C-k> :call <SID>ActivateBuffer("' . s:DIFF_NAME_STATUS_BUF . '")<CR>'
   execute 'nnoremap <buffer> <silent> <C-l> :call <SID>ActivateBuffer("' . s:DIFF_BY_FILE_BUF . '")<CR>'
 
 
@@ -90,7 +90,7 @@ function! s:git_log_buffer(target_dir = '.')
   execute 'cd ' . l:old_cwd
 endfunction
 
-function! s:show_diff_files()
+function! s:diff_name_status()
   " カレントディレクトリを保存して、移動
   let l:old_cwd = getcwd()
   execute 'cd ' . s:target_dir
@@ -101,22 +101,32 @@ function! s:show_diff_files()
   let existing_win = 0
 
   " バッファを開く、または上書き準備
-  call s:FindOrCreateBuffer(s:DIFF_ONLY_NAME_BUF, commit, 'split')
+  call s:FindOrCreateBuffer(s:DIFF_NAME_STATUS_BUF, commit, 'split')
 
   " バッファの内容を更新
-  execute 'silent read !git diff --name-only ' . commit . '^ ' . commit
+  execute 'silent read !git diff --name-status ' . commit . '^ ' . commit
+  execute 'set nolist'
+  execute 'set tabstop=6'
   1delete
+  " シンタックスハイライトの設定
+  syntax match deleted "^D.*" 
+  syntax match modified "^M.*"
+  syntax match rename "^R.*"
+  syntax match added "^A.*"
+  highlight deleted ctermfg=red guifg=red
+  highlight modified ctermfg=green guifg=green
+  highlight rename ctermfg=magenta guifg=magenta
+  highlight added ctermfg=cyan guifg=cyan
   setlocal nomodifiable
 
-
   execute 'nnoremap <buffer> <silent> <C-j> :call <SID>ActivateBuffer("' . s:LOG_BUF . '")<CR>'
-  execute 'nnoremap <buffer> <silent> <C-h> :call <SID>ActivateBuffer("' . s:DIFF_ONLY_NAME_BUF . '")<CR>'
-  execute 'nnoremap <buffer> <silent> <C-k> :call <SID>ActivateBuffer("' . s:DIFF_ONLY_NAME_BUF . '")<CR>'
+  execute 'nnoremap <buffer> <silent> <C-h> :call <SID>ActivateBuffer("' . s:DIFF_NAME_STATUS_BUF . '")<CR>'
+  execute 'nnoremap <buffer> <silent> <C-k> :call <SID>ActivateBuffer("' . s:DIFF_NAME_STATUS_BUF . '")<CR>'
   execute 'nnoremap <buffer> <silent> <C-l> :call <SID>ActivateBuffer("' . s:DIFF_BY_FILE_BUF . '")<CR>'
-  nnoremap <buffer> <silent> p :call <SID>show_file_diff()<CR>
+  nnoremap <buffer> <silent> p :call <SID>diff_by_file()<CR>
   nnoremap <buffer> <silent> q :call <SID>close_all_buffer()<CR>
-  nnoremap <buffer> <silent> <C-n> j:call <SID>show_file_diff()<CR>
-  nnoremap <buffer> <silent> <C-p> k:call <SID>show_file_diff()<CR>
+  nnoremap <buffer> <silent> <C-n> j:call <SID>diff_by_file()<CR>
+  nnoremap <buffer> <silent> <C-p> k:call <SID>diff_by_file()<CR>
   
   call win_gotoid(current_win)
 
@@ -137,14 +147,15 @@ function! FindGitRoot(dir)
     return ''
 endfunction
 
-function! s:show_file_diff()
+function! s:diff_by_file()
   " カレントディレクトリを保存して、移動
   let l:old_cwd = getcwd()
   execute 'cd ' . FindGitRoot(s:target_dir)
 
   let bufname = bufname('%')
   let commit = split(bufname, ':')[2]
-  let filename = getline('.')
+  let line = getline('.')
+  let file_path = substitute(line, '\v^(\S+\s+)', '', '')
   let current_win = win_getid()
 
   " バッファを開く、または上書き準備
@@ -152,8 +163,8 @@ function! s:show_file_diff()
   call s:FindOrCreateBuffer(s:DIFF_BY_FILE_BUF, commit, 'vsplit')
 
   " バッファの内容を更新
-  let @+ = 'silent read !git diff ' . commit . '^ ' . commit . ' -- ' . filename
-  execute 'silent read !git diff ' . commit . '^ ' . commit . ' -- ' . filename
+  "let @+ = 'silent read !git diff ' . commit . '^ ' . commit . ' -- ' . file_path
+  execute 'silent read !git diff ' . commit . '^ ' . commit . ' -- ' . file_path
   1delete
   " シンタックスハイライトの設定
   syntax match diffRemoved "^-.*" 
@@ -165,8 +176,8 @@ function! s:show_file_diff()
 
   nnoremap <buffer> <silent> q :call <SID>close_all_buffer()<CR>
   execute 'nnoremap <buffer> <silent> <C-j> :call <SID>ActivateBuffer("' . s:LOG_BUF . '")<CR>'
-  execute 'nnoremap <buffer> <silent> <C-h> :call <SID>ActivateBuffer("' . s:DIFF_ONLY_NAME_BUF . '")<CR>'
-  execute 'nnoremap <buffer> <silent> <C-k> :call <SID>ActivateBuffer("' . s:DIFF_ONLY_NAME_BUF . '")<CR>'
+  execute 'nnoremap <buffer> <silent> <C-h> :call <SID>ActivateBuffer("' . s:DIFF_NAME_STATUS_BUF . '")<CR>'
+  execute 'nnoremap <buffer> <silent> <C-k> :call <SID>ActivateBuffer("' . s:DIFF_NAME_STATUS_BUF . '")<CR>'
   execute 'nnoremap <buffer> <silent> <C-l> :call <SID>ActivateBuffer("' . s:DIFF_BY_FILE_BUF . '")<CR>'
 
   call win_gotoid(current_win)
