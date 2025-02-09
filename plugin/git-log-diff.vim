@@ -62,6 +62,19 @@ function! s:FindOrCreateBuffer(buffer_name, commit, split_cmd)
   %delete _
 endfunction
 
+function! GetParentCommit(commit)
+  " Determine the parent commit
+  let parent = a:commit . '^'
+  let parent_exists = system('git rev-parse ' . shellescape(parent) . ' 2>/dev/null')
+
+  if v:shell_error
+      " If commit^ does not exist, use the empty tree hash
+      let parent = '4b825dc642cb6eb9a060e54bf8d69288fbee4904'
+  endif
+
+  return parent
+endfunction
+
 function! s:git_log_buffer(target_dir = '.')
   let s:target_dir = a:target_dir
   " カレントディレクトリを保存して、移動
@@ -104,7 +117,7 @@ function! s:diff_name_status()
   call s:FindOrCreateBuffer(s:DIFF_NAME_STATUS_BUF, commit, 'split')
 
   " バッファの内容を更新
-  execute 'silent read !git diff --name-status ' . commit . '^ ' . commit
+  execute 'silent read !git diff --name-status ' . GetParentCommit(commit) . ' ' . commit
   execute 'set nolist'
   execute 'set tabstop=6'
   1delete
@@ -163,8 +176,7 @@ function! s:diff_by_file()
   call s:FindOrCreateBuffer(s:DIFF_BY_FILE_BUF, commit, 'vsplit')
 
   " バッファの内容を更新
-  "let @+ = 'silent read !git diff ' . commit . '^ ' . commit . ' -- ' . file_path
-  execute 'silent read !git diff ' . commit . '^ ' . commit . ' -- ' . file_path
+  execute 'silent read !git diff ' . GetParentCommit(commit) . ' ' . commit . ' -- ' . shellescape(file_path)
   1delete
   " シンタックスハイライトの設定
   syntax match diffRemoved "^-.*" 
