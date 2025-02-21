@@ -31,7 +31,11 @@ To bind the command to `<leader>gl`, add the following to your `.vimrc` or `init
 nnoremap <leader>gl :GitLogDiff<CR>
 ```
 
-## Contributing
+## To Do
+- カーソルが動いたら必ず次のサブウィンドウの表示を変える
+- 各ウィンドウを開いたら最初にカーソルがあたっている情報から次のサブウィンドウを開く
+- ファイル指定ログ表示
+- ２つの指定コミット間のDiff表示
 
 Contributions are welcome! Feel free to open an issue or submit a pull request.
 
