@@ -26,6 +26,10 @@ function! git_log_diff#diff_name_status#open()
   highlight rename ctermfg=magenta guifg=magenta
   highlight added ctermfg=cyan guifg=cyan
   setlocal nomodifiable
+  set cursorline
+  " 最初のファイルのdiffを表示
+  call git_log_diff#diff_by_file#open()
+
 
   call git_log_diff#mapping#setup_diff_name_status_buffer()
   

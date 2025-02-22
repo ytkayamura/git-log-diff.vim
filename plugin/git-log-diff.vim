@@ -8,3 +8,8 @@ command! -nargs=? -complete=dir GitLogDiff call git_log_diff#git_log_buffer#open
 command! GitLogDiffClose call git_log_diff#common#close_all_buffer()
 nnoremap <leader>gl :execute 'GitLogDiff ' . expand('%:p:h')<CR>
 
+" オートコマンドグループを作成
+augroup GitLogDiffGroup
+    autocmd!
+    autocmd CursorMoved * call git_log_diff#common#OnCursorMovedChangePreview()
+augroup END
