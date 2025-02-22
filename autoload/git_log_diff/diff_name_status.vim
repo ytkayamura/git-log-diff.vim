@@ -4,6 +4,14 @@ function! git_log_diff#diff_name_status#open()
   execute 'cd ' . g:gitLogDiff.target_dir
 
   let commit = split(getline('.'), ' ')[0]
+  
+  " 前回と同じコミットの場合はスキップ
+  if commit ==# g:gitLogDiff.last_commit
+    execute 'cd ' . l:old_cwd
+    return
+  endif
+  let g:gitLogDiff.last_commit = commit
+
   let current_win = win_getid()
   let existing_buf = 0
   let existing_win = 0

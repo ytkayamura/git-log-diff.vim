@@ -7,6 +7,15 @@ function! git_log_diff#diff_by_file#open()
   let commit = split(bufname, ':')[2]
   let line = getline('.')
   let file_path = substitute(line, '\v^(\S+\s+)', '', '')
+  let old_commit = g:gitLogDiff.last_diff_by_file_commit
+  
+  " 前回と同じコミット・ファイルの場合はスキップ
+  if file_path ==# g:gitLogDiff.last_file && old_commit ==# g:gitLogDiff.last_commit
+    execute 'cd ' . l:old_cwd
+    return
+  endif
+  let g:gitLogDiff.last_file = file_path
+  
   let current_win = win_getid()
 
   " バッファを開く、または上書き準備
@@ -15,6 +24,7 @@ function! git_log_diff#diff_by_file#open()
 
   " バッファの内容を更新
   execute 'silent read !git diff ' . git_log_diff#common#GetParentCommit(commit) . ' ' . commit . ' -- ' . shellescape(file_path)
+  let g:gitLogDiff.last_diff_by_file_commit = commit
   1delete
   " シンタックスハイライトの設定
   syntax match diffRemoved "^-.*" 

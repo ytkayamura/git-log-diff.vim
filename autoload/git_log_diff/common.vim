@@ -94,7 +94,6 @@ endfunction
 
 function! git_log_diff#common#OnCursorMovedChangePreview()
   let bufname = bufname('%')
-  echo bufname
   if bufname =~# g:gitLogDiff.LOG_BUF
       call git_log_diff#diff_name_status#open()
   elseif bufname =~# g:gitLogDiff.DIFF_NAME_STATUS_BUF
