@@ -32,7 +32,6 @@ nnoremap <leader>gl :GitLogDiff<CR>
 ```
 
 ## To Do
-- ファイル指定ログ表示
 - ２つの指定コミット間のDiff表示
 
 Contributions are welcome! Feel free to open an issue or submit a pull request.

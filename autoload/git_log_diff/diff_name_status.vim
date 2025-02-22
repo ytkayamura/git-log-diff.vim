@@ -20,11 +20,30 @@ function! git_log_diff#diff_name_status#open()
   call git_log_diff#common#FindOrCreateBuffer(g:gitLogDiff.DIFF_NAME_STATUS_BUF, commit, 'split')
 
   " バッファの内容を更新
-  execute 'silent read !git diff --name-status ' . git_log_diff#common#GetParentCommit(commit) . ' ' . commit
+  let l:git_diff_output = systemlist('git diff --name-status ' . git_log_diff#common#GetParentCommit(commit) . ' ' . commit)
+  let l:filtered_output = []
+  if exists('g:gitLogDiff.target_file')
+    " ファイル指定の場合は、そのファイルを先頭に表示
+    let l:relative_target_file = fnamemodify(g:gitLogDiff.target_file, ':.')
+    " gitルートからの相対パスを取得
+    let l:git_prefix = system('git rev-parse --show-prefix')
+    let l:git_prefix = substitute(l:git_prefix, '\n\+$', '', '') " 改行を削除
+    let l:relative_target_file = l:git_prefix . l:relative_target_file
+    " パスの/をエスケープし、タブまたはスペースの後にファイル名が来るようにパターンを修正
+    let l:escaped_target_file = escape(l:relative_target_file, '/')
+    echo l:escaped_target_file
+    let l:target_file_line = filter(copy(l:git_diff_output), 'v:val =~# "\\V\\s\\+" . l:escaped_target_file . "\\$"')
+    call extend(l:filtered_output, l:target_file_line)
+    let l:other_lines = filter(copy(l:git_diff_output), 'v:val !~# "\\V\\s\\+" . l:escaped_target_file . "\\$"')
+    call extend(l:filtered_output, l:other_lines)
+  else
+    let l:filtered_output = l:git_diff_output
+  endif
+  call setline(1, l:filtered_output)
+
   set nolist
   set tabstop=6
   set cursorline
-  1delete
   " シンタックスハイライトの設定
   syntax match deleted "^D.*" 
   syntax match modified "^M.*"
