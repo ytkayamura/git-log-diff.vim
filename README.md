@@ -33,6 +33,7 @@ nnoremap <leader>gl :GitLogDiff<CR>
 
 ## To Do
 - ２つの指定コミット間のDiff表示
+- 引数を変えて開き直しができるようにする
 
 Contributions are welcome! Feel free to open an issue or submit a pull request.
 
