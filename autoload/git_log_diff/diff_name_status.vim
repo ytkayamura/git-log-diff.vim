@@ -21,8 +21,9 @@ function! git_log_diff#diff_name_status#open()
 
   " バッファの内容を更新
   execute 'silent read !git diff --name-status ' . git_log_diff#common#GetParentCommit(commit) . ' ' . commit
-  execute 'set nolist'
-  execute 'set tabstop=6'
+  set nolist
+  set tabstop=6
+  set cursorline
   1delete
   " シンタックスハイライトの設定
   syntax match deleted "^D.*" 
@@ -33,8 +34,8 @@ function! git_log_diff#diff_name_status#open()
   highlight modified ctermfg=green guifg=green
   highlight rename ctermfg=magenta guifg=magenta
   highlight added ctermfg=cyan guifg=cyan
+
   setlocal nomodifiable
-  set cursorline
   " 最初のファイルのdiffを表示
   call git_log_diff#diff_by_file#open()
 
