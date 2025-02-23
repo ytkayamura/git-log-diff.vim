@@ -7,6 +7,7 @@ let g:gitLogDiff.last_commit = ''
 let g:gitLogDiff.last_file = ''
 let g:gitLogDiff.last_diff_by_file_commit = ''
 let g:gitLogDiff.target_file = ''
+let g:gitLogDiff.diff_win_resize = 15
 
 command! -nargs=? -complete=file GitLogDiff call s:git_log(<f-args>)
 command! GitLogDiffClose call git_log_diff#common#close_all_buffer()

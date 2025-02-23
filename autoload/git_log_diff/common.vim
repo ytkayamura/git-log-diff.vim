@@ -57,6 +57,22 @@ function! git_log_diff#common#FindOrCreateBuffer(buffer_name, commit, split_cmd)
   %delete _
 endfunction
 
+function! git_log_diff#common#ResizeBuffer(buffer_name, size)
+  " バッファを探す
+  for buf in getbufinfo({'bufloaded': 1})
+    if buf.name =~  escape(a:buffer_name, '\')
+      " そのバッファを表示しているウィンドウを探す
+      let l:win_id = bufwinid(buf.bufnr)
+      if l:win_id != -1
+        " ウィンドウが見つかった場合はサイズを変更
+        call win_gotoid(l:win_id)
+        execute 'resize ' . a:size
+        return
+    endif
+  endfor
+  echo "ログバッファが見つかりません: " . a:buffer_name . "*"
+endfunction
+
 function! git_log_diff#common#GetParentCommit(commit)
   " Determine the parent commit
   let parent = a:commit . '^'

@@ -1,3 +1,5 @@
+let s:resize_done = 0
+
 function! git_log_diff#diff_name_status#open()
   " カレントディレクトリを保存して、移動
   let l:old_cwd = getcwd()
@@ -62,6 +64,11 @@ function! git_log_diff#diff_name_status#open()
   call git_log_diff#mapping#setup_diff_name_status_buffer()
   
   call win_gotoid(current_win)
+
+  if !s:resize_done
+    call git_log_diff#common#ResizeBuffer(g:gitLogDiff.LOG_BUF, g:gitLogDiff.diff_win_resize)
+    let s:resize_done = 1
+  endif
 
   " 元のディレクトリに戻る
   execute 'cd ' . l:old_cwd
