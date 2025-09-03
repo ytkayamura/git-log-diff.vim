@@ -23,7 +23,7 @@ function! git_log_diff#diff_by_file#open()
   call git_log_diff#common#FindOrCreateBuffer(g:gitLogDiff.DIFF_BY_FILE_BUF , commit, 'vsplit')
 
   " バッファの内容を更新
-  execute 'silent read !git diff ' . git_log_diff#common#GetParentCommit(commit) . ' ' . commit . ' -- ' . shellescape(file_path)
+  execute 'silent read !git -c core.quotepath=false diff ' . git_log_diff#common#GetParentCommit(commit) . ' ' . commit . ' -- ' . shellescape(file_path)
   let g:gitLogDiff.last_diff_by_file_commit = commit
   1delete
   " シンタックスハイライトの設定
