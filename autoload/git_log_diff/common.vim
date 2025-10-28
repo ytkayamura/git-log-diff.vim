@@ -68,6 +68,7 @@ function! git_log_diff#common#ResizeBuffer(buffer_name, size)
         call win_gotoid(l:win_id)
         execute 'resize ' . a:size
         return
+      endif
     endif
   endfor
   echo "ログバッファが見つかりません: " . a:buffer_name . "*"
