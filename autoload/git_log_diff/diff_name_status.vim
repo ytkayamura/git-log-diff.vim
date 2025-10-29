@@ -22,7 +22,8 @@ function! git_log_diff#diff_name_status#open()
   call git_log_diff#common#FindOrCreateBuffer(g:gitLogDiff.DIFF_NAME_STATUS_BUF, commit, 'split')
 
   " バッファの内容を更新
-  let l:git_diff_output = systemlist('git -c core.quotepath=false diff --name-status ' . git_log_diff#common#GetParentCommit(commit) . ' ' . commit)
+  " -M オプションで改名を検出
+  let l:git_diff_output = systemlist('git -c core.quotepath=false diff -M --name-status ' . git_log_diff#common#GetParentCommit(commit) . ' ' . commit)
   let l:filtered_output = []
   if exists('g:gitLogDiff.target_file')
     " ファイル指定の場合は、そのファイルを先頭に表示

@@ -6,7 +6,32 @@ function! git_log_diff#diff_by_file#open()
   let bufname = bufname('%')
   let commit = split(bufname, ':')[2]
   let line = getline('.')
-  let file_path = substitute(line, '\v^(\S+\s+)', '', '')
+
+  " 改名の場合は R100 old_path new_path のような形式
+  " それ以外は M/A/D file_path のような形式
+  let status = matchstr(line, '^\S\+')
+  if status =~# '^R'
+    " 改名の場合: "R100 old_path new_path" から new_path を取得
+    let parts = split(line, '\t')
+    if len(parts) >= 3
+      let old_file_path = parts[1]
+      let file_path = parts[2]
+    else
+      " フォールバック: スペース区切りで取得
+      let parts = split(line)
+      if len(parts) >= 3
+        let old_file_path = parts[1]
+        let file_path = parts[2]
+      else
+        let file_path = substitute(line, '\v^(\S+\s+)', '', '')
+        let old_file_path = ''
+      endif
+    endif
+  else
+    let file_path = substitute(line, '\v^(\S+\s+)', '', '')
+    let old_file_path = ''
+  endif
+
   let old_commit = g:gitLogDiff.last_diff_by_file_commit
   
   " 前回と同じコミット・ファイルの場合はスキップ
@@ -23,7 +48,12 @@ function! git_log_diff#diff_by_file#open()
   call git_log_diff#common#FindOrCreateBuffer(g:gitLogDiff.DIFF_BY_FILE_BUF , commit, 'vsplit')
 
   " バッファの内容を更新
-  execute 'silent read !git -c core.quotepath=false diff ' . git_log_diff#common#GetParentCommit(commit) . ' ' . commit . ' -- ' . shellescape(file_path)
+  " 改名の場合は旧ファイル名も指定して差分を取得
+  if old_file_path !=# ''
+    execute 'silent read !git -c core.quotepath=false diff -M ' . git_log_diff#common#GetParentCommit(commit) . ' ' . commit . ' -- ' . shellescape(old_file_path) . ' ' . shellescape(file_path)
+  else
+    execute 'silent read !git -c core.quotepath=false diff ' . git_log_diff#common#GetParentCommit(commit) . ' ' . commit . ' -- ' . shellescape(file_path)
+  endif
   let g:gitLogDiff.last_diff_by_file_commit = commit
   1delete
   " シンタックスハイライトの設定
