@@ -34,6 +34,8 @@ nnoremap <leader>gl :GitLogDiff<CR>
 ## To Do
 - ２つの指定コミット間のDiff表示
 - 引数を変えて開き直しができるようにする
+- luaプラグインガイドを参考に改善  
+  https://github.com/neovim/neovim/blob/master/runtime/doc/lua-plugin.txt
 
 Contributions are welcome! Feel free to open an issue or submit a pull request.
 
