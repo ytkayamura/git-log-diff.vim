@@ -1,7 +1,7 @@
 function! git_log_diff#diff_by_file#open()
   " カレントディレクトリを保存して、移動
   let l:old_cwd = getcwd()
-  execute 'cd ' . git_log_diff#common#FindGitRoot(g:gitLogDiff.target_dir)
+  execute 'cd ' . fnameescape(git_log_diff#common#FindGitRoot(g:gitLogDiff.target_dir))
 
   let bufname = bufname('%')
   let commit = split(bufname, ':')[2]
@@ -48,14 +48,16 @@ function! git_log_diff#diff_by_file#open()
   call git_log_diff#common#FindOrCreateBuffer(g:gitLogDiff.DIFF_BY_FILE_BUF , commit, 'vsplit')
 
   " バッファの内容を更新
+  let l:parent = git_log_diff#common#GetParentCommit(commit)
   " 改名の場合は旧ファイル名も指定して差分を取得
   if old_file_path !=# ''
-    execute 'silent read !git -c core.quotepath=false diff -M ' . git_log_diff#common#GetParentCommit(commit) . ' ' . commit . ' -- ' . shellescape(old_file_path) . ' ' . shellescape(file_path)
+    let l:diff = systemlist(['git', '-c', 'core.quotepath=false', 'diff', '-M', l:parent, commit, '--', old_file_path, file_path])
   else
-    execute 'silent read !git -c core.quotepath=false diff ' . git_log_diff#common#GetParentCommit(commit) . ' ' . commit . ' -- ' . shellescape(file_path)
+    let l:diff = systemlist(['git', '-c', 'core.quotepath=false', 'diff', l:parent, commit, '--', file_path])
   endif
+  setlocal modifiable
+  call setline(1, l:diff)
   let g:gitLogDiff.last_diff_by_file_commit = commit
-  1delete
   " シンタックスハイライトの設定
   syntax match diffRemoved "^-.*" 
   syntax match diffAdded "^+.*"
@@ -69,6 +71,6 @@ function! git_log_diff#diff_by_file#open()
   call win_gotoid(current_win)
 
   " 元のディレクトリに戻る
-  execute 'cd ' . l:old_cwd
+  execute 'cd ' . fnameescape(l:old_cwd)
 endfunction
 

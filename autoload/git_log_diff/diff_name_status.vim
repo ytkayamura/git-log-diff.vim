@@ -1,15 +1,20 @@
 let s:resize_done = 0
 
+" 開き直し時にログバッファのリサイズを再度行わせる
+function! git_log_diff#diff_name_status#reset()
+  let s:resize_done = 0
+endfunction
+
 function! git_log_diff#diff_name_status#open()
   " カレントディレクトリを保存して、移動
   let l:old_cwd = getcwd()
-  execute 'cd ' . g:gitLogDiff.target_dir
+  execute 'cd ' . fnameescape(g:gitLogDiff.target_dir)
 
   let commit = split(getline('.'), ' ')[0]
-  
+
   " 前回と同じコミットの場合はスキップ
   if commit ==# g:gitLogDiff.last_commit
-    execute 'cd ' . l:old_cwd
+    execute 'cd ' . fnameescape(l:old_cwd)
     return
   endif
   let g:gitLogDiff.last_commit = commit
@@ -23,13 +28,13 @@ function! git_log_diff#diff_name_status#open()
 
   " バッファの内容を更新
   " -M オプションで改名を検出
-  let l:git_diff_output = systemlist('git -c core.quotepath=false diff -M --name-status ' . git_log_diff#common#GetParentCommit(commit) . ' ' . commit)
+  let l:git_diff_output = systemlist(['git', '-c', 'core.quotepath=false', 'diff', '-M', '--name-status', git_log_diff#common#GetParentCommit(commit), commit])
   let l:filtered_output = []
   if exists('g:gitLogDiff.target_file')
     " ファイル指定の場合は、そのファイルを先頭に表示
     let l:relative_target_file = fnamemodify(g:gitLogDiff.target_file, ':.')
     " gitルートからの相対パスを取得
-    let l:git_prefix = system('git rev-parse --show-prefix')
+    let l:git_prefix = system(['git', 'rev-parse', '--show-prefix'])
     let l:git_prefix = substitute(l:git_prefix, '\n\+$', '', '') " 改行を削除
     let l:relative_target_file = l:git_prefix . l:relative_target_file
     " パスの/をエスケープし、タブまたはスペースの後にファイル名が来るようにパターンを修正
@@ -72,6 +77,6 @@ function! git_log_diff#diff_name_status#open()
   endif
 
   " 元のディレクトリに戻る
-  execute 'cd ' . l:old_cwd
+  execute 'cd ' . fnameescape(l:old_cwd)
 endfunction
 

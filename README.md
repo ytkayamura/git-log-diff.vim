@@ -23,6 +23,11 @@ Once installed, you can use the plugin to display git log diffs by running the f
 - In the log buffer, select a commit and press `p` to display the result of `git diff --name-status` in a new buffer.
 - In the name-status buffer, select a file and press `p` to display the diff of that file in a diff buffer.
 
+## Feature: Change Directory
+
+- In any of the buffers, press `c` to open a floating directory picker, then reopen the log for the selected directory.
+- In the picker: `j`/`k` to move, `h` to go to the parent directory, `l` to enter the directory under the cursor, `<CR>` to confirm, `q`/`<Esc>` to close.
+
 ## Keybinding Example
 
 To bind the command to `<leader>gl`, add the following to your `.vimrc` or `init.vim`:

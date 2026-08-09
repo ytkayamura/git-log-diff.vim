@@ -75,16 +75,19 @@ function! git_log_diff#common#ResizeBuffer(buffer_name, size)
 endfunction
 
 function! git_log_diff#common#GetParentCommit(commit)
-  " Determine the parent commit
-  let parent = a:commit . '^'
-  let parent_exists = system('git rev-parse ' . shellescape(parent) . ' 2>/dev/null')
+  " Resolve commit^ to an actual hash.
+  " On Windows cmd.exe '^' is the escape character, so passing a raw 'commit^'
+  " into a later shell command would be mangled. Resolving it here keeps every
+  " downstream argument a plain hex hash. Using the list form of systemlist()
+  " also avoids any shell quoting (no '2>/dev/null', which is not portable).
+  let l:out = systemlist(['git', 'rev-parse', '--verify', '--quiet', a:commit . '^'])
 
-  if v:shell_error
-      " If commit^ does not exist, use the empty tree hash
-      let parent = '4b825dc642cb6eb9a060e54bf8d69288fbee4904'
+  if v:shell_error != 0 || empty(l:out)
+      " If commit^ does not exist (root commit), use the empty tree hash
+      return '4b825dc642cb6eb9a060e54bf8d69288fbee4904'
   endif
 
-  return parent
+  return l:out[0]
 endfunction
 
 function! git_log_diff#common#close_all_buffer()
@@ -96,15 +99,24 @@ function! git_log_diff#common#close_all_buffer()
 endfunction
 
 function! git_log_diff#common#FindGitRoot(dir)
-    let l:git_dir = a:dir
-    
-    while l:git_dir != '/'
-        if isdirectory(l:git_dir . '/.git')
+    " Walk up until we find a .git, stopping when the parent no longer changes
+    " (the filesystem root). The old 'while != "/"' test never matched on
+    " Windows roots such as 'C:/', causing an infinite loop.
+    let l:git_dir = fnamemodify(a:dir, ':p')
+    let l:git_dir = substitute(l:git_dir, '[\\/]\+$', '', '')
+
+    while 1
+        " .git is a directory in a normal repo, a file in a worktree/submodule
+        if isdirectory(l:git_dir . '/.git') || filereadable(l:git_dir . '/.git')
             return l:git_dir
         endif
-        let l:git_dir = fnamemodify(l:git_dir, ':h')
+        let l:parent = fnamemodify(l:git_dir, ':h')
+        if l:parent ==# l:git_dir
+            break
+        endif
+        let l:git_dir = l:parent
     endwhile
-    
+
     return ''
 endfunction
 
